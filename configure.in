@@ -1,0 +1,145 @@
+
+dnl svn info
+dnl $Author: morongo $
+dnl $HeadURL: file:///svn/p/jaula/code/trunk/configure.in $
+dnl $Id: configure.in 49 2009-05-10 09:24:23Z morongo $
+
+dnl Global Definitions
+AC_INIT(jaula, 1.4.0, morongo666@gmail.com)
+AM_CONFIG_HEADER(config.h)
+AC_CONFIG_SRCDIR(jaula/jaula.h)
+AC_COPYRIGHT([(c) Kombo Morongo <morongo666@gmail.com>])
+AC_REVISION($Revision: 49 $)
+
+dnl Automake configuration
+AM_INIT_AUTOMAKE([1.9 dist-bzip2])
+
+dnl Keeping libtool macros in-tree
+AC_CONFIG_MACRO_DIR([m4])
+
+dnl target library version
+AC_SUBST(VERSION_INFO, [1:4:0])
+
+dnl Default installation directory
+AC_PREFIX_DEFAULT([/usr])
+
+dnl project first-level directories
+AC_SUBST(SUBDIRS, ["doc jaula examples"])
+
+dnl Autoheader configuration
+AH_TOP([/*
+	This file has been automatically generated during the
+	configuration process.
+
+	Do not touch the contents of this directly but by invoking
+	./configure from the project root.
+
+	Run ./configure --help from the project root in order to get
+	information about the available configuration options.
+*/])
+AH_TEMPLATE([_REENTRANT])
+AH_TEMPLATE([EXTENDED_DEBUG], [Flag to report debugging information from the library])
+AH_BOTTOM([/* EOF : config.h */])
+
+dnl Debugging options
+AC_ARG_ENABLE(extended-debug, AS_HELP_STRING([--enable-extended-debug], [enables debugging of the parsing process]),
+[if test "$enableval" = "yes"
+ then
+    AC_DEFINE(EXTENDED_DEBUG)
+ fi
+])
+
+dnl Documentation generation
+AC_ARG_ENABLE(doc-gen, AS_HELP_STRING([--enable-doc-gen], [generates library documentation]),
+[if test "$enableval" = "yes"
+ then
+    DOC_GEN=1
+ else
+    DOC_GEN=0
+ fi
+])
+AC_SUBST(DOC_GEN)
+
+dnl C++ language usage
+AC_LANG(C++)
+
+dnl libtool usage
+AC_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+
+dnl Estandar compiler checks
+AC_PROG_CXX
+AC_PROG_CXXCPP
+AC_HEADER_STDC
+
+dnl Flex checking
+AM_PROG_LEX
+if test "$LEX" != flex
+then
+   AC_MSG_ERROR([Flex lexical analyzer not found. Configuration aborted])
+else
+   AC_SUBST(LEX_OUTPUT_ROOT, lex.yy)
+fi
+AC_CHECK_HEADERS(FlexLexer.h,, AC_MSG_ERROR([Header not found. Configuration aborted.]))
+
+dnl C headers check
+AC_CHECK_HEADERS(ctype.h,,AC_MSG_ERROR([Header not found. Configuration aborted.]))
+AC_CHECK_HEADERS(stdlib.h,,AC_MSG_ERROR([Header not found. Configuration aborted.]))
+
+dnl C++ headers check
+AC_CHECK_HEADERS(cstdio,,AC_MSG_ERROR([Header not found. Configuration aborted.]))
+AC_CHECK_HEADERS(fstream,,AC_MSG_ERROR([Header not found. Configuration aborted.]))
+AC_CHECK_HEADERS(iostream,,AC_MSG_ERROR([Header not found. Configuration aborted.]))
+AC_CHECK_HEADERS(list,,AC_MSG_ERROR([Header not found. Configuration aborted.]))
+AC_CHECK_HEADERS(map,,AC_MSG_ERROR([Header not found. Configuration aborted.]))
+AC_CHECK_HEADERS(memory,,AC_MSG_ERROR([Header not found. Configuration aborted.]))
+AC_CHECK_HEADERS(ostream,,AC_MSG_ERROR([Header not found. Configuration aborted.]))
+AC_CHECK_HEADERS(sstream,,AC_MSG_ERROR([Header not found. Configuration aborted.]))
+AC_CHECK_HEADERS(string,,AC_MSG_ERROR([Header not found. Configuration aborted.]))
+
+dnl Doxygen checks
+if test "$DOC_GEN" != "0"
+then
+   AC_PATH_PROG(DOXYGEN, [doxygen], [])
+   if test -z "$DOXYGEN"
+   then
+      AC_MSG_WARN([API documentation generation will be skipped.])
+      AC_SUBST(HAVE_DOT, [NO])
+   else
+      AC_MSG_NOTICE([API documentation will be generated.])
+      AC_SUBST(DOXYGEN,[doxygen])
+      AC_PATH_PROG(TEST_DOT, [dot], [])
+      if test -z "$TEST_DOT"
+      then
+        AC_MSG_WARN([API documentation will only include basic diagrams.])
+        AC_SUBST(HAVE_DOT, [NO])
+      else
+        AC_MSG_NOTICE([API documentation will include extended diagrams.])
+        AC_SUBST(HAVE_DOT, [YES])
+      fi
+   fi
+else
+   DOXYGEN=""
+   AC_SUBST(DOXYGEN)
+   AC_MSG_WARN([--disable-doc-gen option activated. Library documentation will not be generated.])
+fi
+
+dnl Doxygen extensions for PDF conversion
+if test -n "$DOXYGEN"
+then
+   AC_PATH_PROG(PDFLATEX, [pdflatex], [])
+   if test -z "$PDFLATEX"
+   then
+     AC_MSG_WARN([API latex documentation cannot be converted to PDF format.])
+   else
+     AC_MSG_NOTICE([API latex documentation will be also available in PDF format.])
+   fi
+else
+   PDFLATEX=""
+fi
+AC_SUBST(PDFLATEX)
+
+dnl Generacion de ficheros
+AC_OUTPUT([Makefile doc/Doxyfile doc/Makefile jaula/Makefile examples/Makefile])
+
+dnl EOF $Id: configure.in 49 2009-05-10 09:24:23Z morongo $

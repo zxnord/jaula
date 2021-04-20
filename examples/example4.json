@@ -1,0 +1,42 @@
+[
+	{
+		"test": "escaped quotes",
+		"value": "testing \""
+	},
+	{
+		"test": "escaped backslash",
+		"value": "testing \\"
+	},
+	{
+		"test": "escaped slash",
+		"value": "testing \/"
+	},
+	{
+		"test": "escaped backspace",
+		"value": "testing \b"
+	},
+	{
+		"test": "escaped form feed",
+		"value": "testing \f"
+	},
+	{
+		"test": "escaped newline",
+		"value": "testing \n"
+	},
+	{
+		"test": "escaped carriage return",
+		"value": "testing \r"
+	},
+	{
+		"test": "escaped tab",
+		"value": "testing \t"
+	},
+	{
+		"test": "escaped unicode < 0x0100",
+		"value": "testing \u007C"
+	},
+	{
+		"test": "escaped unicode > 0x00ff",
+		"value": "testing \uA741"
+	}
+] 

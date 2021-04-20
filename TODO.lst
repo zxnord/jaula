@@ -1,0 +1,18 @@
+
+# svn info
+# $Author: morongo $
+# $Date: 2007-04-15 15:50:29 +0000 (Sun, 15 Apr 2007) $
+# $HeadURL: file:///svn/p/jaula/code/trunk/TODO.lst $
+# $Id: TODO.lst 14 2007-04-15 15:50:29Z morongo $
+# $Revision: 14 $
+
+- Run intensive testing.
+- Generate jparse manpage
+- Fix lintian warning on debian packages
+- Include full support for unicode characters.
+- Improve documentation (create user manual).
+- Get rid of flex in order to minimize requirements so it
+  will be easier to compile on any platform.
+
+# EOF $Id: TODO.lst 14 2007-04-15 15:50:29Z morongo $
+
