@@ -94,7 +94,7 @@ namespace JAULA
       data_.push_back(duplicate(*(*it)));
   }
 
-  void Value_Array::set(Value const &origin) throw(Bad_Data_Type)
+  void Value_Array::set(Value const &origin)
   {
     try
     {

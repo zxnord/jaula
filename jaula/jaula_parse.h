@@ -33,7 +33,7 @@
  * \addtogroup jaula_parse JAULA: JSON data parser
  */
 
-#include <jaula/jaula_lexan.h>
+//#include <jaula/jaula_lexan.h>
 #include <jaula/jaula_syntax_error.h>
 #include <jaula/jaula_value_complex.h>
 
@@ -106,10 +106,14 @@ namespace JAULA
        * the user to free it when it is no longer needed in order to avoid
        * leaks.
        */
-      static Value_Complex *parseStream(std::istream &inpStream
-        , bool comments_allowed = false
-        , bool full_read = true
-        ) throw(Exception);
+      //static Value_Complex *parseStream(std::istream &inpStream
+      //  , bool comments_allowed = false
+      //  , bool full_read = true
+      //  );
+
+      static Value_Complex *parseStream2(std::istream &inpStream);
+
+
 
     private:
 
@@ -164,8 +168,9 @@ namespace JAULA
            * syntax or lexical error is found. Upon execution input stream is
            * positioned so that a new token or EOF can be read from the input.
            */
-          static Value *parseValue(Lexan &lexan, unsigned int token)
-            throw(Exception);
+          //static Value *parseValue(Lexan &lexan, unsigned int token);
+
+          static Value *parseString(const std::string &input);
 
         private:
 
@@ -236,8 +241,7 @@ namespace JAULA
            * to send the Lexan::LexerError Exception or the one received in
            * the input parameter based on this.
            */
-          static void EOFError(Lexan &lexan, Syntax_Error const &ex)
-            throw(Exception);
+//          static void EOFError(Lexan &lexan, Syntax_Error const &ex);
       };                         // class Value_Parser
 
   };                             // class Parser

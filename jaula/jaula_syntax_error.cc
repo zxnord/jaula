@@ -34,7 +34,7 @@ extern "C"
 }
 
 
-#include <jaula_syntax_error.h>
+#include <jaula/jaula_syntax_error.h>
 
 namespace JAULA
 {                                // namespace JAULA

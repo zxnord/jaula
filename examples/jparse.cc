@@ -35,25 +35,29 @@ extern "C"
 
 
 
-#ifdef HAVE_MEMORY
+//#ifdef HAVE_MEMORY
 #include <memory>
-#endif
+//#endif
 
-#ifdef HAVE_FSTREAM
+//#ifdef HAVE_FSTREAM
 #include <fstream>
-#endif
+//#endif
 
-#ifdef HAVE_IOSTREAM
+//#ifdef HAVE_IOSTREAM
 #include <iostream>
-#endif
+//#endif
 
-#ifdef HAVE_STRING
+//#ifdef HAVE_STRING
 #include <string>
-#endif
+//#endif
 
 #include <jaula.h>
 
 #define APPNAME "jparse"
+
+#define PACKAGE_NAME "jparse"
+#define PACKAGE_VERSION "1.4.1"
+
 
 int main(int argc, char *argv[])
 {
@@ -78,7 +82,7 @@ int main(int argc, char *argv[])
 		try
 		{
 			std::cout << "Analyzing " << argv[i] << " ...";
-			std::auto_ptr<JAULA::Value_Complex> pParsed(JAULA::Parser::parseStream(arch));
+			std::unique_ptr<JAULA::Value_Complex> pParsed(JAULA::Parser::parseStream2(arch));
 			std::cout << "Ok." << std::endl
 				<< std::endl
 				<< "Reduced expression of " << argv[i] << ':' << std::endl

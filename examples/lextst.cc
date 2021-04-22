@@ -34,21 +34,23 @@ extern "C"
 
 
 
-#ifdef HAVE_FSTREAM
+//#ifdef HAVE_FSTREAM
 #include <fstream>
-#endif
+//#endif
 
-#ifdef HAVE_IOSTREAM
+//#ifdef HAVE_IOSTREAM
 #include <iostream>
-#endif
+//#endif
 
-#ifdef HAVE_STRING
+//#ifdef HAVE_STRING
 #include <string>
-#endif
+//#endif
 
 #include <jaula.h>
 
 #define APPNAME "lextst"
+#define PACKAGE_NAME "jparse"
+#define PACKAGE_VERSION "1.4.1"
 
 int main(int argc, char *argv[])
 {

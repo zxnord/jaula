@@ -39,9 +39,9 @@ extern "C"
 }
 
 
-#ifdef HAVE_SSTREAM
+//#ifdef HAVE_SSTREAM
 #include <sstream>
-#endif
+//#endif
 
 #include <jaula/jaula_value_string.h>
 
@@ -71,7 +71,7 @@ namespace JAULA
     data_ = data;
   }
 
-  void Value_String::set(Value const &origin) throw(Bad_Data_Type)
+  void Value_String::set(Value const &origin)
   {
     try
     {
@@ -111,9 +111,9 @@ namespace JAULA
         ostr << '\\' << 't';
       else if (str[i] == ' ')
         ostr << ' ';
-      else if (isprint(str[i]))
+      else //if (isprint(str[i]))
         ostr << str[i];
-      else
+      /*else
       {
         std::ostringstream  aux;
         int val = static_cast<int>(str[i]) & 0x00ff;
@@ -122,7 +122,7 @@ namespace JAULA
         for (std::string::size_type j = 0; ((j + aux.str().size()) < 4); j++)
           ostr << '0';
         ostr << aux.str();
-      }
+      }*/
     }
     ostr << '"';
   }
