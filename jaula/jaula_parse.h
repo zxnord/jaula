@@ -109,7 +109,7 @@ namespace JAULA
       static Value_Complex *parseStream(std::istream &inpStream
         , bool comments_allowed = false
         , bool full_read = true
-        ) throw(Exception);
+        );
 
     private:
 
@@ -164,8 +164,7 @@ namespace JAULA
            * syntax or lexical error is found. Upon execution input stream is
            * positioned so that a new token or EOF can be read from the input.
            */
-          static Value *parseValue(Lexan &lexan, unsigned int token)
-            throw(Exception);
+          static Value *parseValue(Lexan &lexan, unsigned int token);
 
         private:
 
@@ -236,8 +235,7 @@ namespace JAULA
            * to send the Lexan::LexerError Exception or the one received in
            * the input parameter based on this.
            */
-          static void EOFError(Lexan &lexan, Syntax_Error const &ex)
-            throw(Exception);
+          static void EOFError(Lexan &lexan, Syntax_Error const &ex);
       };                         // class Value_Parser
 
   };                             // class Parser

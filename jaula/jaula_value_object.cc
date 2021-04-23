@@ -93,7 +93,7 @@ namespace JAULA
       data_.insert(dataType::value_type(it->first, duplicate(*(it->second))));
   }
 
-  void Value_Object::set(Value const &origin) throw(Bad_Data_Type)
+  void Value_Object::set(Value const &origin)
   {
     try
     {
@@ -110,7 +110,7 @@ namespace JAULA
     }
   }
 
-  void Value_Object::insertItem(std::string const &name, Value const &item) throw(Name_Duplicated)
+  void Value_Object::insertItem(std::string const &name, Value const &item)
   {
     std::pair<dataType::iterator, bool> insSt = data_.insert(dataType::value_type(name, duplicate(item)));
     if (!insSt.second)

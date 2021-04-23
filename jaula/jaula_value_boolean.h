@@ -95,7 +95,7 @@ namespace JAULA
        * This exception is launched in case that origin and destination value
        * types are different.
        */
-      virtual void set(Value const &origin) throw(Bad_Data_Type);
+      virtual void set(Value const &origin);
 
     private:
 

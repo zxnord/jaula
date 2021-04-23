@@ -35,7 +35,6 @@
 %option yyclass="JAULA::Lexan"
 %option yylineno
 %option noyywrap
-%option outfile = "lex.yy.c"
 
 %{
 
