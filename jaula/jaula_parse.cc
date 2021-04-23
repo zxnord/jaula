@@ -43,13 +43,15 @@ extern "C"
 }
 
 
-#ifdef HAVE_MEMORY
+//#ifdef HAVE_MEMORY
 #include <memory>
-#endif
+//#endif
 
-#ifdef HAVE_SSTREAM
+//#ifdef HAVE_SSTREAM
 #include <sstream>
-#endif
+///#endif
+
+#include <unordered_set>
 
 #include <jaula/jaula_parse.h>
 #include <jaula/jaula_syntax_error.h>
@@ -63,6 +65,251 @@ extern "C"
 
 namespace JAULA
 {                                // namespace JAULA
+
+  static const char DOUBLE_PRECISION_CHAR = '.';
+
+  static const std::unordered_set<char> WHITESPACE_CHARS_ {
+      ' ', '\t', '\n', '\r'
+  };
+
+  static const std::unordered_set<char> MAIN_OBJECT_CHARS_ {
+      '{', '['
+  };
+
+  static const std::unordered_set<char> MAIN_NUMBER_CHARS_ {
+      '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+  };
+
+  static const std::unordered_set<char> EXTRA_NUMBER_CHARS_ {
+      DOUBLE_PRECISION_CHAR, 'e', 'E', '+'
+  };
+
+  static const std::unordered_set<char> MAIN_BOOLEAN_CHARS_ {
+      't', 'f'
+  };
+
+  inline void skipWhitespace(std::string::const_iterator &it) {
+    if(WHITESPACE_CHARS_.find(*it) != WHITESPACE_CHARS_.end()) {
+      skipWhitespace(++it);
+    }
+  }
+
+  inline void GetUnicodeChar(unsigned int code, char chars[5]) {
+    if (code <= 0x7F) {
+        chars[0] = (code & 0x7F); chars[1] = '\0';
+    } else if (code <= 0x7FF) {
+        // one continuation byte
+        chars[1] = 0x80 | (code & 0x3F); code = (code >> 6);
+        chars[0] = 0xC0 | (code & 0x1F); chars[2] = '\0';
+    } else if (code <= 0xFFFF) {
+        // two continuation bytes
+        chars[2] = 0x80 | (code & 0x3F); code = (code >> 6);
+        chars[1] = 0x80 | (code & 0x3F); code = (code >> 6);
+        chars[0] = 0xE0 | (code & 0xF); chars[3] = '\0';
+    } else if (code <= 0x10FFFF) {
+        // three continuation bytes
+        chars[3] = 0x80 | (code & 0x3F); code = (code >> 6);
+        chars[2] = 0x80 | (code & 0x3F); code = (code >> 6);
+        chars[1] = 0x80 | (code & 0x3F); code = (code >> 6);
+        chars[0] = 0xF0 | (code & 0x7); chars[4] = '\0';
+    } else {
+        // unicode replacement character
+        chars[2] = 0xEF; chars[1] = 0xBF; chars[0] = 0xBD;
+        chars[3] = '\0';
+    }
+  }
+
+  inline void parseUnicodeCharacter(std::string::const_iterator &it, std::string &value) {
+    static std::unordered_set<char> HEX_CHARS {
+        'A', 'B', 'C', 'D', 'E', 'F'
+    };
+
+    std::string base = "0x";
+    char uniVal[5];
+
+    for(int i = 0; i < 4; ++i) {
+        if( (*(it+i) == '\0') || ((MAIN_NUMBER_CHARS_.find(*(it+i)) == MAIN_NUMBER_CHARS_.end()) 
+          && (HEX_CHARS.find(*(it+i)) == HEX_CHARS.end())) ) {
+          throw Syntax_Error("Unexpected EOF found or invalid Unicode string", "error iterating string");
+        }
+
+        base += *(it+i);
+    }
+
+    GetUnicodeChar(std::stoi(base, 0, 16), uniVal);
+    value += uniVal;
+    it += 4;
+  }
+
+  inline void parseSpecialCharacters(std::string::const_iterator &it, std::string &value) {
+    switch(*it) {
+      case '\\':
+        value.push_back('\\');
+        break;
+
+      case '"':
+        value.push_back('"');
+        break;
+
+      case '/':
+        value.push_back('/');
+        break;
+
+      case 'b':
+        value.push_back('\b');
+        break;
+
+      case 'f':
+        value.push_back('\f');
+        break;
+
+      case 'n':
+        value.push_back('\n');
+        break;
+
+      case 'r':
+        value.push_back('\r');
+        break;
+
+      case 't':
+        value.push_back('\t');
+        break;
+
+      case 'u':
+        parseUnicodeCharacter(++it, value);
+        return;
+
+      default:
+        return;
+    }
+    it++;
+  }
+
+  inline Value *findNumericValue(std::string::const_iterator &it) {
+    std::string rawValue;
+    bool doubleNumber = false;
+
+    while( (*it != ' ') && (*it != ',') ) {
+      if( *it == 0 ) {
+        throw Syntax_Error("Unexpected EOF found", "error iterating string");
+      }
+      
+      if( (MAIN_NUMBER_CHARS_.find(*it) == MAIN_NUMBER_CHARS_.end()) && 
+        (EXTRA_NUMBER_CHARS_.find(*it) == EXTRA_NUMBER_CHARS_.end()) ) {
+        throw Syntax_Error("Invalid number", "error iterating string");
+      }
+
+      if( *it == '.' ) {
+          doubleNumber = true;
+      }
+
+      rawValue.push_back(*(it++));
+    }
+
+    if( doubleNumber ) {
+        std::unique_ptr<Value_Number> value(new Value_Number());
+
+        value->set(std::stod(rawValue));
+
+        return value.release();
+    } else {
+        std::unique_ptr<Value_Number_Int> value(new Value_Number_Int());
+
+        value->set(std::stoi(rawValue));
+
+        return value.release();
+    }
+  }
+
+  inline Value *findBooleanValue(std::string::const_iterator &it) {
+    std::unique_ptr<Value_Boolean> value(new Value_Boolean());
+    std::string rawValue;
+
+    while( (*it != ' ') && (*it != ',') ) {
+      if( *it == 0 ) {
+        throw Syntax_Error("Unexpected EOF found", "error iterating string");
+      }
+
+      rawValue.push_back(*(it++));
+    }
+
+    if( rawValue.compare("true") == 0 ) {
+      value->set(true);
+    } else if( rawValue.compare("false") == 0 ) {
+      value->set(false);
+    } else {
+        throw Syntax_Error("Invalid Boolean string value", "error finding boolean value");
+    }
+
+    return value.release();
+  }
+
+  inline Value *findStringValue(std::string::const_iterator &it) {
+    std::unique_ptr<Value_String> value(new Value_String());
+    std::string rawValue;
+
+    while( (*it != '"') && (*(it-1) != '\\') ) {
+      if( *it == 0 ) {
+        throw Syntax_Error("Unexpected EOF found", "error iterating string");
+      }
+
+      if( *it == '\\' ) {
+        parseSpecialCharacters(++it, rawValue);
+      } else {
+        rawValue.push_back(*(it++));
+      }
+    }
+
+    value->set(rawValue);
+
+    return value.release();
+  }
+
+  inline Value *findNullValue(std::string::const_iterator &it) {
+    std::unique_ptr<Value_Null> value;
+    std::string rawValue;
+
+    while( (*it != ' ') && (*it != ',') ) {
+      if( *it == 0 ) {
+        throw Syntax_Error("Unexpected EOF found", "error iterating string");
+      }
+
+      rawValue.push_back(*(it++));
+    }
+
+    if( rawValue.compare("null") == 0 ) {
+      value.reset(new Value_Null());
+    } else {
+        throw Syntax_Error("Invalid Boolean string value", "error finding boolean value");
+    }
+
+    return value.release();
+  }
+
+  inline Value *findObjectValue(std::string::const_iterator &it, int &token) {
+    if( MAIN_NUMBER_CHARS_.find(*it) != MAIN_NUMBER_CHARS_.end() ) {
+      token = '1';
+      return findNumericValue(it);
+    } else if( MAIN_BOOLEAN_CHARS_.find(*it) != MAIN_BOOLEAN_CHARS_.end() ) {
+      token = 'b';
+      return findBooleanValue(it);
+    } else if( *it == '[' ) {
+      token = '[';
+      return nullptr;
+    } else if( *it == '{' ) {
+      token = '{';
+      return nullptr;
+    } else if( *it == 'n' ) {
+      token = 'n';
+      return findNullValue(it);
+    } else if( *it == '"' ) {
+      token = 's';
+      return findStringValue(++it);
+    } else {
+      throw Syntax_Error("json invalid property value", "error property_next state machine");
+    }
+  }
+
   Parser::Parser(void)
     {}
 
@@ -71,14 +318,14 @@ namespace JAULA
 
   Value_Complex *Parser::parseStream(std::istream &inpStream
     , bool comments_allowed
-    , bool full_read) throw(Exception)
+    , bool full_read)
   {
     try
     {
       Lexan   lexer(inpStream, comments_allowed);
 
       unsigned int firstToken = lexer.yylex();
-      std::auto_ptr<Value> pVal(Value_Parser::parseValue(lexer, firstToken));
+      std::unique_ptr<Value> pVal(Value_Parser::parseValue(lexer, firstToken));
 
       if (!dynamic_cast<Value_Complex const *>(pVal.get()))
         throw Syntax_Error("The first value taken from the input does not"
@@ -108,6 +355,353 @@ namespace JAULA
     }
   }
 
+  Value_Complex *Parser::parseStream2(std::istream &inpStream)
+  {
+    std::string fullStr;
+
+    inpStream.seekg(0, std::ios::end);
+    fullStr.reserve(inpStream.tellg());
+    inpStream.seekg(0, std::ios::beg);
+
+    fullStr.assign((std::istreambuf_iterator<char>(inpStream)),
+                    std::istreambuf_iterator<char>());
+
+    return dynamic_cast<Value_Complex *>(Value_Parser::parseString(fullStr));
+  }
+
+  Value *Parser::Value_Parser::parseString(const std::string &input)
+  {
+    std::unique_ptr<Value_Array>  pArray;
+    std::unique_ptr<Value_Object> pObject;
+    std::string                   propName;
+
+    auto it = input.cbegin();
+    auto state = START;
+
+    skipWhitespace(it);
+    
+    if((it == input.cend()) || (MAIN_OBJECT_CHARS_.find(*it) == MAIN_OBJECT_CHARS_.end()) ) {
+      throw Syntax_Error("The first value taken from the input does not"
+        " belong to a complex type (array or object)"
+        , "analyzing input stream");
+    }
+
+
+    while(it != input.cend()) {
+        if( *it == 0 ) {
+          throw Syntax_Error("Unexpected EOF found", "error iterating string");
+        }
+
+       switch (state)
+        {                        // main state switch
+
+          case START :
+          {
+            int token = 0;
+            std::unique_ptr<Value> pItemVal(findObjectValue(it, token));
+
+            if(WHITESPACE_CHARS_.find(*it) != WHITESPACE_CHARS_.end()) {
+                skipWhitespace(it);
+            }
+
+            switch(*it)
+            {
+              case '{':
+                pObject.reset(new Value_Object());
+                state = property_begin;
+                it++;
+                break;
+              
+              case '[':
+                pArray.reset(new Value_Array());
+                state = array_addItem;
+                it++;
+                break;
+
+              case 's' :
+                it++;
+              case 'n' :
+              case 'b' :
+              case '1' :
+                return pItemVal.release();
+
+              default:
+                /*std::ostringstream  errDet;
+                errDet << "Unexpected symbol ";
+                if (isprint(*it))
+                  errDet << "'" << static_cast<char>(*it) << "'";
+                else
+                  errDet << '(' << *it << ')';
+                errDet << " while waiting for a value or the beginning of an"
+                  << " array or object";
+                std::ostringstream  errAct;
+                errAct << "analyzing line "
+                  << lexan.lineno()
+                  << " from input stream.";
+                throw Syntax_Error(errDet.str(), errAct.str());*/
+                throw Syntax_Error("json valid initializers { or [ not found", "error START state machine");
+            }
+            break;
+          }
+
+          case array_addItem :
+          {
+            int token = 0;
+
+            if(WHITESPACE_CHARS_.find(*it) != WHITESPACE_CHARS_.end()) {
+                skipWhitespace(it);
+            }
+
+            std::unique_ptr<Value> pItemVal(findObjectValue(it, token));
+
+            switch (token)
+            {                    // array_addItem state switch
+              case 0 :
+                continue;
+
+              case ']' :
+                return pArray.release();
+
+              case '[' :
+                {
+                  int braceCount = 0;
+                  std::unique_ptr<Value> pItemComplex(parseString(std::string(it, input.cend())));
+                  pArray->addItem(*(pItemComplex.get()));
+
+                  while( braceCount >= 0 ) {
+                    if( *(++it) == '[' ) {
+                      braceCount++;
+                    } else if( *it == ']' ) {
+                      braceCount--;
+                    }
+                  }
+                  it++;
+                }
+                state = array_nextItem;
+                break;
+
+              case '{' :
+                {
+                  int braceCount = 0;
+                  std::unique_ptr<Value> pItemComplex(parseString(std::string(it, input.cend())));
+                  pArray->addItem(*(pItemComplex.get()));
+
+                  while( braceCount >= 0 ) {
+                    if( *(++it) == '{' ) {
+                      braceCount++;
+                    } else if( *it == '}' ) {
+                      braceCount--;
+                    }
+                  }
+                  it++;
+                }
+                state = array_nextItem;
+                break;
+
+              case 's' :
+                it++;
+              case 'n' :
+              case 'b' :
+              case '1' :
+                pArray->addItem(*(pItemVal.get()));
+                state = array_nextItem;
+                break;
+
+              default :
+                throw Syntax_Error("json invalid array element value", "error array_addItem state machine");
+
+            }                    // array_addItem state switch
+            break;
+          }
+
+          case array_nextItem :
+
+            if(WHITESPACE_CHARS_.find(*it) != WHITESPACE_CHARS_.end()) {
+                skipWhitespace(it);
+            }
+
+            switch (*it)
+            {                    // array_nextItem state switch
+              case 0 :
+                continue;
+
+              case ']' :
+                return pArray.release();
+
+              case ',' :
+                state = array_addItem;
+                it++;
+                break;
+
+              default :
+                throw Syntax_Error("json valid array value next , or end ] not found", "error array_nextItem state machine");
+
+
+            }                    // array_nextItem state switch
+            break;
+
+          case property_begin :
+
+            if(WHITESPACE_CHARS_.find(*it) != WHITESPACE_CHARS_.end()) {
+                skipWhitespace(it);
+            }
+
+            switch (*it)
+            {                    // property_begin state switch
+              case 0:
+                continue;
+
+              case '}' :
+                return pObject.release();
+
+              case '"' :
+                {
+                  std::unique_ptr<Value> val(findStringValue(++it));
+                  propName = static_cast<Value_String*>(val.get())->getData();
+                  state = property_name;
+                  it++;
+                  break;
+                }
+
+              default :
+                {
+                  /*std::ostringstream  errDet;
+                  errDet << "Unexpected symbol ";
+                  if (isprint(token))
+                    errDet << "'" << static_cast<char>(token) << "'";
+                  else
+                    errDet << '(' << token << ')';
+                  errDet << " while waiting for a property name or the end of"
+                    << " an object";
+                  std::ostringstream  errAct;
+                  errAct << "analyzing line "
+                    << lexan.lineno()
+                    << " from input stream."; */
+                  throw Syntax_Error("json valid propName identifier \" or empty object } not found", "error property_begin state machine");
+                }
+
+            }                    // property_begin state switch
+            break;
+
+          case property_name :
+            switch (*it)
+            {                    // property_name state switch
+              case 0 :
+                continue;
+
+              case ':' :
+                state = property_value;
+                it++;
+                break;
+
+              default :
+                throw Syntax_Error("json valid property value separator : not found", "error property_name state machine");
+
+            }                    // property_name state switch
+            break;
+
+          case property_value :
+          {
+            int token = 0;
+
+            if(WHITESPACE_CHARS_.find(*it) != WHITESPACE_CHARS_.end()) {
+                skipWhitespace(it);
+            }
+
+            std::unique_ptr<Value> pItemVal(findObjectValue(it, token));
+            switch (token)
+            {                    // property_value state switch
+              case 0 :
+                continue;
+
+              case '[' :
+                {
+                  int braceCount = 0;
+                  std::unique_ptr<Value> pItemComplex(parseString(std::string(it, input.cend())));
+                  pObject->insertItem(propName, *(pItemComplex.get()));
+
+                  while( braceCount >= 0 ) {
+                    if( *(++it) == '[' ) {
+                      braceCount++;
+                    } else if( *it == ']' ) {
+                      braceCount--;
+                    }
+                  }
+                  it++;
+                }
+                state = property_next;
+                break;
+
+              case '{' :
+                {
+                  int braceCount = 0;
+                  std::unique_ptr<Value> pItemComplex(parseString(std::string(it, input.cend())));
+                  pObject->insertItem(propName, *(pItemComplex.get()));
+
+                  while( braceCount >= 0 ) {
+                    if( *(++it) == '{' ) {
+                      braceCount++;
+                    } else if( *it == '}' ) {
+                      braceCount--;
+                    }
+                  }
+                  it++;
+                }
+                state = property_next;
+                break;
+
+              case 's' :
+                it++;
+              case 'n' :
+              case 'b' :
+              case '1' :
+                pObject->insertItem(propName, *(pItemVal.get()));
+                state = property_next;
+                break;
+
+              default :
+                throw Syntax_Error("json invalid property value", "error property_next state machine");
+
+            }                    // property_value state switch
+            break;
+          }
+
+          case property_next :
+
+            if(WHITESPACE_CHARS_.find(*it) != WHITESPACE_CHARS_.end()) {
+                skipWhitespace(it);
+            }
+
+            switch (*it)
+            {                    // property_next state switch
+              case 0 :
+                continue;
+
+              case '}' :
+                return pObject.release();
+
+              case ',' :
+                state = property_begin;
+                it++;
+                break;
+
+              default :
+                throw Syntax_Error("json valid property value next , or end } not found", "error property_next state machine");
+
+            }                    // property_next state switch
+            break;
+
+          default:
+            throw Syntax_Error("state machine invalid status", "internal error");
+
+          break;
+
+        }                        // main state switch
+    }
+
+    return nullptr;
+  }
+
   Parser::Value_Parser::Value_Parser(void)
     {}
 
@@ -115,12 +709,11 @@ namespace JAULA
     {}
 
   Value *Parser::Value_Parser::parseValue(Lexan &lexan, unsigned int token)
-    throw(Exception)
   {
     try
     {
-      std::auto_ptr<Value_Array>  pArray;
-      std::auto_ptr<Value_Object> pObject;
+      std::unique_ptr<Value_Array>  pArray;
+      std::unique_ptr<Value_Object> pObject;
       std::string                 propName;
       for (parser_states  state = START
         ; (state != END)
@@ -255,7 +848,7 @@ namespace JAULA
               case NUMBER_INT_VALUE :
               case STRING_VALUE :
               {
-                std::auto_ptr<Value>    pItem(parseValue(lexan, token));
+                std::unique_ptr<Value>    pItem(parseValue(lexan, token));
                 pArray->addItem(*(pItem.get()));
               }
               state = array_nextItem;
@@ -346,7 +939,7 @@ namespace JAULA
 
               case STRING_VALUE :
               {
-                std::auto_ptr<Value> pVal(parseValue(lexan, token));
+                std::unique_ptr<Value> pVal(parseValue(lexan, token));
                 Value_String *pStrVal =
                   dynamic_cast<Value_String *>(pVal.get());
                 if (pStrVal)
@@ -456,7 +1049,7 @@ namespace JAULA
               case NUMBER_INT_VALUE :
               case STRING_VALUE :
               {
-                std::auto_ptr<Value>    pItemVal(parseValue(lexan, token));
+                std::unique_ptr<Value>    pItemVal(parseValue(lexan, token));
                 pObject->insertItem(propName, *(pItemVal.get()));
               }
               state = property_next;
@@ -559,8 +1152,8 @@ namespace JAULA
     }
   }
 
+
   void Parser::Value_Parser::EOFError(Lexan &lexan, Syntax_Error const &ex)
-    throw(Exception)
   {
     try
     {

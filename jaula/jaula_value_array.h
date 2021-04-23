@@ -148,7 +148,7 @@ namespace JAULA
        * The destination array is destroyed during the asignment process so,
        * any references to it or to its former elements will be void.
        */
-      virtual void set(Value const &origin) throw(Bad_Data_Type);
+      virtual void set(Value const &origin);
 
       /**
        * \brief Appends one item to the array

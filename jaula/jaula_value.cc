@@ -58,7 +58,7 @@ namespace JAULA
     return Type_;
   }
 
-  void Value::set(Value const &origin) throw(Bad_Data_Type)
+  void Value::set(Value const &origin)
   {
     if (Type_ != origin.getType())
       throw Bad_Data_Type("Origin and destination value types do not match"
@@ -66,7 +66,7 @@ namespace JAULA
         , "Value::set(Value const &)");
   }
 
-  Value &Value::operator=(Value const &orig) throw(Bad_Data_Type)
+  Value &Value::operator=(Value const &orig)
   {
     try
     {

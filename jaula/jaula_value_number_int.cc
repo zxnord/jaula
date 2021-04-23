@@ -61,7 +61,7 @@ namespace JAULA
     data_ = data;
   }
 
-  void Value_Number_Int::set(Value const &origin) throw(Bad_Data_Type)
+  void Value_Number_Int::set(Value const &origin)
   {
     try
     {
