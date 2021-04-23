@@ -1,4 +1,4 @@
-## Version 1.5.0
+## Version 1.4.1
 > Thu 22 Apr 2021 Edson Contreras <edrecon@gmail.com>
 - Library standard updates
 - Added CMake build
