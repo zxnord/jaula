@@ -111,9 +111,9 @@ namespace JAULA
         ostr << '\\' << 't';
       else if (str[i] == ' ')
         ostr << ' ';
-      else //if (isprint(str[i]))
+      else if (isprint(str[i]))
         ostr << str[i];
-      /*else
+      else
       {
         std::ostringstream  aux;
         int val = static_cast<int>(str[i]) & 0x00ff;
@@ -122,7 +122,7 @@ namespace JAULA
         for (std::string::size_type j = 0; ((j + aux.str().size()) < 4); j++)
           ostr << '0';
         ostr << aux.str();
-      }*/
+      }
     }
     ostr << '"';
   }

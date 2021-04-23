@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 
-include_directories(${jaula_SOURCE_DIR})
+find_package(FLEX)
+
+include_directories(${jaula_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+
+FLEX_TARGET(JaulaLexan ${jaula_SOURCE_DIR}/jaula/jaula_lexan.ll ${CMAKE_BINARY_DIR}/jaula/jaula_lexan.cxx)
 
 list(APPEND SRCS ${jaula_SOURCE_DIR}/jaula/jaula_bad_data_type.cc)
 list(APPEND SRCS ${jaula_SOURCE_DIR}/jaula/jaula_exception.cc)
@@ -37,8 +41,8 @@ list(APPEND HDRS_OTHERS ${jaula_SOURCE_DIR}/jaula/jaula_value_object.h)
 list(APPEND HDRS_OTHERS ${jaula_SOURCE_DIR}/jaula/jaula_value_string.h)
 list(APPEND HDRS_OTHERS ${jaula_SOURCE_DIR}/jaula/jaula_value.h)
 
-add_library(jaula SHARED ${SRCS} ${HDRS} ${HDRS_OTHERS})
-add_library(jaula_static STATIC ${SRCS} ${HDRS} ${HDRS_OTHERS})
+add_library(jaula SHARED ${SRCS} ${HDRS} ${HDRS_OTHERS} ${FLEX_JaulaLexan_OUTPUTS})
+add_library(jaula_static STATIC ${SRCS} ${HDRS} ${HDRS_OTHERS} ${FLEX_JaulaLexan_OUTPUTS})
 set_property(TARGET jaula_static PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 install(TARGETS jaula LIBRARY DESTINATION lib)

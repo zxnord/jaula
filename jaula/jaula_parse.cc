@@ -316,7 +316,7 @@ namespace JAULA
   Parser::~Parser(void)
     {}
 
-/*  Value_Complex *Parser::parseStream(std::istream &inpStream
+  Value_Complex *Parser::parseStream(std::istream &inpStream
     , bool comments_allowed
     , bool full_read)
   {
@@ -354,7 +354,6 @@ namespace JAULA
       throw ex;
     }
   }
-*/
 
   Value_Complex *Parser::parseStream2(std::istream &inpStream)
   {
@@ -709,7 +708,7 @@ namespace JAULA
   Parser::Value_Parser::~Value_Parser(void)
     {}
 
-/*  Value *Parser::Value_Parser::parseValue(Lexan &lexan, unsigned int token)
+  Value *Parser::Value_Parser::parseValue(Lexan &lexan, unsigned int token)
   {
     try
     {
@@ -1152,9 +1151,9 @@ namespace JAULA
       throw ex;
     }
   }
-*/
 
-/*  void Parser::Value_Parser::EOFError(Lexan &lexan, Syntax_Error const &ex)
+
+  void Parser::Value_Parser::EOFError(Lexan &lexan, Syntax_Error const &ex)
   {
     try
     {
@@ -1170,7 +1169,6 @@ namespace JAULA
       throw ex;
     }
   }
-*/
 
 }                                // namespace JAULA
 
