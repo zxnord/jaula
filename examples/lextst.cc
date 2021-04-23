@@ -33,22 +33,21 @@ extern "C"
 }
 
 
-
-#ifdef HAVE_FSTREAM
 #include <fstream>
-#endif
-
-#ifdef HAVE_IOSTREAM
 #include <iostream>
-#endif
-
-#ifdef HAVE_STRING
 #include <string>
-#endif
 
 #include <jaula.h>
 
 #define APPNAME "lextst"
+
+#ifndef PACKAGE_NAME
+#define PACKAGE_NAME "jaula"
+#endif
+
+#ifndef PACKAGE_VERSION
+#define PACKAGE_VERSION "1.4.1"
+#endif
 
 int main(int argc, char *argv[])
 {

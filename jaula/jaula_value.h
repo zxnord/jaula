@@ -107,7 +107,7 @@ namespace JAULA
        * This exception is launched in case that origin and destination value
        * types are different.
        */
-      virtual void set(Value const &origin) throw(Bad_Data_Type);
+      virtual void set(Value const &origin);
 
       /**
        * \brief Assignment operator
@@ -127,7 +127,7 @@ namespace JAULA
        * This method controls if destination and origin instances are the same
        * so there is no trouble in a = a asignments.
        */
-      Value &operator=(Value const &orig) throw(Bad_Data_Type);
+      Value &operator=(Value const &orig);
 
       /**
        * \brief Creates a duplicate of a value

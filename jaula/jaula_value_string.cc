@@ -39,9 +39,7 @@ extern "C"
 }
 
 
-#ifdef HAVE_SSTREAM
 #include <sstream>
-#endif
 
 #include <jaula/jaula_value_string.h>
 
@@ -71,7 +69,7 @@ namespace JAULA
     data_ = data;
   }
 
-  void Value_String::set(Value const &origin) throw(Bad_Data_Type)
+  void Value_String::set(Value const &origin)
   {
     try
     {

@@ -42,14 +42,8 @@ extern "C"
 
 }
 
-
-#ifdef HAVE_MEMORY
 #include <memory>
-#endif
-
-#ifdef HAVE_SSTREAM
 #include <sstream>
-#endif
 
 #include <jaula/jaula_parse.h>
 #include <jaula/jaula_syntax_error.h>
@@ -71,14 +65,14 @@ namespace JAULA
 
   Value_Complex *Parser::parseStream(std::istream &inpStream
     , bool comments_allowed
-    , bool full_read) throw(Exception)
+    , bool full_read)
   {
     try
     {
       Lexan   lexer(inpStream, comments_allowed);
 
       unsigned int firstToken = lexer.yylex();
-      std::auto_ptr<Value> pVal(Value_Parser::parseValue(lexer, firstToken));
+      std::unique_ptr<Value> pVal(Value_Parser::parseValue(lexer, firstToken));
 
       if (!dynamic_cast<Value_Complex const *>(pVal.get()))
         throw Syntax_Error("The first value taken from the input does not"
@@ -115,12 +109,11 @@ namespace JAULA
     {}
 
   Value *Parser::Value_Parser::parseValue(Lexan &lexan, unsigned int token)
-    throw(Exception)
   {
     try
     {
-      std::auto_ptr<Value_Array>  pArray;
-      std::auto_ptr<Value_Object> pObject;
+      std::unique_ptr<Value_Array>  pArray;
+      std::unique_ptr<Value_Object> pObject;
       std::string                 propName;
       for (parser_states  state = START
         ; (state != END)
@@ -255,7 +248,7 @@ namespace JAULA
               case NUMBER_INT_VALUE :
               case STRING_VALUE :
               {
-                std::auto_ptr<Value>    pItem(parseValue(lexan, token));
+                std::unique_ptr<Value>    pItem(parseValue(lexan, token));
                 pArray->addItem(*(pItem.get()));
               }
               state = array_nextItem;
@@ -346,7 +339,7 @@ namespace JAULA
 
               case STRING_VALUE :
               {
-                std::auto_ptr<Value> pVal(parseValue(lexan, token));
+                std::unique_ptr<Value> pVal(parseValue(lexan, token));
                 Value_String *pStrVal =
                   dynamic_cast<Value_String *>(pVal.get());
                 if (pStrVal)
@@ -456,7 +449,7 @@ namespace JAULA
               case NUMBER_INT_VALUE :
               case STRING_VALUE :
               {
-                std::auto_ptr<Value>    pItemVal(parseValue(lexan, token));
+                std::unique_ptr<Value>    pItemVal(parseValue(lexan, token));
                 pObject->insertItem(propName, *(pItemVal.get()));
               }
               state = property_next;
@@ -560,7 +553,6 @@ namespace JAULA
   }
 
   void Parser::Value_Parser::EOFError(Lexan &lexan, Syntax_Error const &ex)
-    throw(Exception)
   {
     try
     {

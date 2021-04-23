@@ -51,7 +51,7 @@ namespace JAULA
     ostr << "null";
   }
 
-  void Value_Null::set(Value const &origin) throw(Bad_Data_Type)
+  void Value_Null::set(Value const &origin)
   {
     try
     {

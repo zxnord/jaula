@@ -65,7 +65,7 @@ namespace JAULA
     data_ = data;
   }
 
-  void Value_Boolean::set(Value const &origin) throw(Bad_Data_Type)
+  void Value_Boolean::set(Value const &origin)
   {
     try
     {

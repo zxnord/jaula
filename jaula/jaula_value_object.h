@@ -151,7 +151,7 @@ namespace JAULA
        * The destination object is destroyed during the asignment process so,
        * any references to it or to its former elements will be void.
        */
-      virtual void set(Value const &origin) throw(Bad_Data_Type);
+      virtual void set(Value const &origin);
 
       /**
        * \brief Inserts one item to the object
@@ -168,8 +168,7 @@ namespace JAULA
        * Inserts a deep copy of the item value at the specified name fot the
        * object.
        */
-      void insertItem(std::string const &name, Value const &item)
-        throw(Name_Duplicated);
+      void insertItem(std::string const &name, Value const &item);
 
       /**
        * \brief Empties the contents of an instance
